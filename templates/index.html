@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>가위바위보</title>
+    <style>
+        body {
+            text-align: center;
+            padding: 50px;
+        }
+        video {
+            width: 640px;
+            height: 480px;
+            margin-bottom: 20px;
+        }
+        button {
+            height: 50px;
+            width: 100px;
+            font-size: 18px;
+            margin: 20px;
+        }
+        #result {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1>가위바위보 게임을 시작합니다!</h1>
+    <video id="webcam" autoplay playsinline></video><br>
+    <button onclick="startGame()">시작</button>
+    <div id="result"></div>
+
+    <script>
+        const video = document.getElementById('webcam');
+
+        // Check if webcam access is available
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                video.srcObject = stream;
+            })
+            .catch((error) => {
+                console.error('Error accessing webcam:', error);
+            });
+
+        function startGame() {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            const image = canvas.toDataURL('image/jpeg');
+
+            // Send captured image to server for prediction
+            fetch('/play_game', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ image: image })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('result').innerText = `컴퓨터: ${data.computer}, 플레이어: ${data.player}, 결과: ${data.result}`;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+
+</body>
+</html>
